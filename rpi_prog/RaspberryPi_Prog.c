@@ -8,17 +8,16 @@
 
 
 #define SDO RPI_BPLUS_GPIO_J8_35
-
 #define SCLK RPI_BPLUS_GPIO_J8_36
-
 #define CSN RPI_BPLUS_GPIO_J8_37
-
 #define SDI RPI_BPLUS_GPIO_J8_38
-
 #define CRESETB RPI_BPLUS_GPIO_J8_40
-
 #define CDONE RPI_BPLUS_GPIO_J8_15
 
+// magic number of bytes to send after CDONE is set
+#define POST_CDONE_SEND     5
+#define CDONE_IT_SLEEP_USEC 100*1000
+#define CDONE_ITS           100
 
 void assert_sdo () {
        bcm2835_gpio_write(SDO, HIGH);
@@ -86,7 +85,17 @@ int cfg(uint8_t* bitmap, size_t len) {
   bcm2835_gpio_write(CRESETB, LOW);
   bcm2835_delay(10);
 
-  while (bcm2835_gpio_lev(CDONE) == HIGH) ;
+  for (int ii=0; ii<CDONE_ITS; ii++) {
+    if (bcm2835_gpio_lev(CDONE) == LOW) {
+      break;
+    }
+    usleep(CDONE_IT_SLEEP_USEC);
+  }
+
+  if (bcm2835_gpio_lev(CDONE) == HIGH) {
+    printf("timeout waiting for CDONE after %f sec\n", (CDONE_ITS*CDONE_IT_SLEEP_USEC)/1e6);
+    return 1;
+  }
 
   printf("CDONE is low!\n");
   bcm2835_gpio_write(CRESETB, HIGH);
@@ -111,6 +120,9 @@ int cfg(uint8_t* bitmap, size_t len) {
     if ((pdone==0) && (bcm2835_gpio_lev(CDONE)==HIGH)) {
       printf("CDONE is High! End of Configuration!\n");
       pdone = 1;
+      for (int jj=0; jj<POST_CDONE_SEND; jj++) {
+        sendbyte(0);
+      }
       break;
     }
 
