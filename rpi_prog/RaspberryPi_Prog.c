@@ -64,6 +64,7 @@ void init_spi () {
    bcm2835_gpio_fsel(CSN, BCM2835_GPIO_FSEL_OUTP);
    bcm2835_gpio_fsel(SCLK, BCM2835_GPIO_FSEL_OUTP);
    bcm2835_gpio_fsel(CRESETB, BCM2835_GPIO_FSEL_OUTP);
+   bcm2835_gpio_fsel(CDONE, BCM2835_GPIO_FSEL_INPT);
    bcm2835_gpio_fsel(SDO, BCM2835_GPIO_FSEL_OUTP);
    bcm2835_gpio_fsel(SDI, BCM2835_GPIO_FSEL_INPT);
 
